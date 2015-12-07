@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 #
-#[aws-iam-tools]
+#[aws-iam-tools.py]
 #
 #Copyright (c) 2015 Masaru Kawabata
 #
@@ -10,7 +10,7 @@
 
 """
 [概要]
-AWS-IAM関連ツール
+ - AWS-IAM関連ツール
 
 [機能]
  - 指定されたIAMユーザーを削除する
@@ -63,7 +63,7 @@ def usage():
     """ コマンドエラー時に表示する文字列 """
     desc = '{0} [Args] [Options]\nDetailed options -h or --help'.format(__file__)
 
-    parser = ArgumentParser(description=desc)
+    parser = ArgumentParser(description = desc)
 
     """ Argument Profile """
     parser.add_argument(
@@ -103,13 +103,13 @@ def get_config():
 
 def iam_get_user(user):
     """
-    引数で指定されたIAMユーザを削除
+    引数で指定されたIAMユーザを確認
     """
     info_log(sys._getframe().f_code.co_name, "Start")
 
     """ Get IAM User """
     try:
-        response = iam.get_user(UserName=user)
+        response = iam.get_user(UserName = user)
     except:
         info_log(sys._getframe().f_code.co_name, "IAM User Not Found: " + user)
         return 1
@@ -117,6 +117,23 @@ def iam_get_user(user):
     info_log(sys._getframe().f_code.co_name, "IAM User Exist: " + user)
     info_log(sys._getframe().f_code.co_name, "End")
     return 0
+
+def iam_list_user_policies(user):
+    """
+    引数で指定されたIAMユーザを確認
+    """
+    info_log(sys._getframe().f_code.co_name, "Start")
+
+    """ Get IAM User """
+    try:
+        response = iam.list_user_policies(UserName = user)
+    except:
+        info_log(sys._getframe().f_code.co_name, "IAM UserPolicy Not Found: " + user)
+        return 1
+
+    info_log(sys._getframe().f_code.co_name, "IAM UserPolicy Exist: " + user)
+    info_log(sys._getframe().f_code.co_name, "End")
+    return response['PolicyNames']
 
 def iam_delete_user(user):
     """
@@ -131,9 +148,21 @@ def iam_delete_user(user):
         info_log(sys._getframe().f_code.co_name, "End")
         sys.exit(1)
         
+    """ Check IAM User """
+    user_policy = iam_list_user_policies(user)
+
+    """ Delete IAM User Policies """
+    for i in range(len(user_policy)):
+        try:
+            response = iam.delete_user_policy(UserName = user, PolicyName = user_policies[0])
+        except:
+            error_log(sys._getframe().f_code.co_name, "Delete IAM User  Error")
+            sys.exit(1)
+        info_log(sys._getframe().f_code.co_name, "Deleted IAM User: " + user)
+
     """ Delete IAM User """
     try:
-        response = iam.delete_user(UserName=user)
+        response = iam.delete_user(UserName = user)
     except:
         error_log(sys._getframe().f_code.co_name, "Delete IAM User Error")
         sys.exit(1)
