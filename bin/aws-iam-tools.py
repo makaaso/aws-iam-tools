@@ -1,5 +1,12 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
+#
+#[aws-iam-tools]
+#
+#Copyright (c) 2015 Masaru Kawabata
+#
+#This software is released under the MIT License.
+#http://opensource.org/licenses/mit-license.php
 
 """
 [概要]

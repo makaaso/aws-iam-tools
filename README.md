@@ -1,16 +1,23 @@
 aws-iam-tools
 ------------
 
-前提条件
+[概要]
+* AWS-IAM関連ツール
 
-* virtualenvwrapper
+[機能]
+* 指定されたIAMユーザーを削除する
 
-動作確認環境
+[前提条件]
+
+* virtualenvwrapperインストール済み
+* ~/.boto にプロファイル登録済み
+
+[動作確認環境]
 
 * Ubuntu14.04
 * python3.4
 
-環境設定
+[環境設定]
 
 ```
 mkdir /opt/aws/aws-iam-tools/log
