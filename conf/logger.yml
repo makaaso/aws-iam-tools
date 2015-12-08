@@ -1,0 +1,31 @@
+version: 1
+
+formatters:
+  aws_iam_tools:
+    format: '%(asctime)s %(levelname)s %(message)s'
+    datefmt: '%Y/%m/%d %H:%M:%S'
+
+handlers:
+#  console:
+#    class: logging.StreamHandler
+#    formatter: aws_iam_tools
+#    level: DEBUG
+#    stream: ext://sys.stdout
+  file:
+    class: logging.FileHandler
+    formatter: aws_iam_tools
+    level: DEBUG
+    filename: /opt/aws/aws-iam-tools/log/aws-iam-tools.log
+
+loggers:
+#  consolelogger:
+#    level: DEBUG
+#    handlers: [console]
+  filelogger:
+    level: DEBUG
+    handlers: [file]
+
+root:
+  level: DEBUG
+#  handlers: [console,file]
+  handlers: [file]
