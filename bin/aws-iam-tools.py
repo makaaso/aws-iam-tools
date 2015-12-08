@@ -135,6 +135,23 @@ def iam_list_groups_for_user(user):
     info_log(sys._getframe().f_code.co_name, "End")
     return group['Groups']
 
+def iam_list_access_keys(user):
+    """
+    引数で指定されたIAMユーザのAccessKeyリストを取得
+    """
+    info_log(sys._getframe().f_code.co_name, "Start")
+
+    """ Get IAM User """
+    try:
+        accesskey = iam.list_access_keys(UserName=user)
+    except:
+        error_log(sys._getframe().f_code.co_name, "Get IAM User AccessKey List: " + user)
+        sys.exit(1)
+
+    info_log(sys._getframe().f_code.co_name, "Get IAM User AccessKey List: " + user)
+    info_log(sys._getframe().f_code.co_name, "End")
+    return accesskey['AccessKeyMetadata']
+
 def iam_list_attached_user_policies(user):
     """
     引数で指定されたIAMユーザにAttachされているポリシーリストを取得
@@ -199,6 +216,13 @@ def iam_delete_user(user):
         info_log(sys._getframe().f_code.co_name, "End")
         sys.exit(1)
 
+    """ Delete IAM User AccessKey """
+    accesskey = iam_list_access_keys(user)
+
+    for i in range(len(accesskey)):
+        response = iam.delete_access_key(UserName = user, AccessKeyId = accesskey[i]['AccessKeyId'])
+        info_log(sys._getframe().f_code.co_name, "Remove AccessKey: " + accesskey[i]['AccessKeyId'])
+        
     """ Detach IAM User Group """
     group = iam_list_groups_for_user(user)
 
