@@ -10,7 +10,7 @@
 
 """
 [概要]
- - AWS-IAM関連ツール
+AWS-IAM関連ツール
 
 [機能]
  - 指定されたIAMユーザーを削除する
@@ -63,7 +63,7 @@ def usage():
     """ コマンドエラー時に表示する文字列 """
     desc = '{0} [Args] [Options]\nDetailed options -h or --help'.format(__file__)
 
-    parser = ArgumentParser(description = desc)
+    parser = ArgumentParser(description=desc)
 
     """ Argument Profile """
     parser.add_argument(
@@ -103,13 +103,13 @@ def get_config():
 
 def iam_get_user(user):
     """
-    引数で指定されたIAMユーザを確認
+    引数で指定されたIAMユーザを削除
     """
     info_log(sys._getframe().f_code.co_name, "Start")
 
     """ Get IAM User """
     try:
-        response = iam.get_user(UserName = user)
+        response = iam.get_user(UserName=user)
     except:
         info_log(sys._getframe().f_code.co_name, "IAM User Not Found: " + user)
         return 1
@@ -118,22 +118,73 @@ def iam_get_user(user):
     info_log(sys._getframe().f_code.co_name, "End")
     return 0
 
-def iam_list_user_policies(user):
+def iam_list_groups_for_user(user):
     """
-    引数で指定されたIAMユーザを確認
+    引数で指定されたIAMユーザにAttachされているグループリストを取得
     """
     info_log(sys._getframe().f_code.co_name, "Start")
 
     """ Get IAM User """
     try:
-        response = iam.list_user_policies(UserName = user)
+        group = iam.list_groups_for_user(UserName=user)
     except:
-        info_log(sys._getframe().f_code.co_name, "IAM UserPolicy Not Found: " + user)
-        return 1
+        error_log(sys._getframe().f_code.co_name, "Get IAM User Group List: " + user)
+        sys.exit(1)
 
-    info_log(sys._getframe().f_code.co_name, "IAM UserPolicy Exist: " + user)
+    info_log(sys._getframe().f_code.co_name, "Get IAM User Group List: " + user)
     info_log(sys._getframe().f_code.co_name, "End")
-    return response['PolicyNames']
+    return group['Groups']
+
+def iam_list_attached_user_policies(user):
+    """
+    引数で指定されたIAMユーザにAttachされているポリシーリストを取得
+    """
+    info_log(sys._getframe().f_code.co_name, "Start")
+
+    """ Get IAM User """
+    try:
+        policy = iam.list_attached_user_policies(UserName=user)
+    except:
+        error_log(sys._getframe().f_code.co_name, "Get IAM User Policy List: " + user)
+        sys.exit(1)
+
+    info_log(sys._getframe().f_code.co_name, "Get IAM User Policy List: " + user)
+    info_log(sys._getframe().f_code.co_name, "End")
+    return policy['AttachedPolicies']
+
+def iam_list_attached_user_policies(user):
+    """
+    引数で指定されたIAMユーザにAttachされているポリシーリストを取得
+    """
+    info_log(sys._getframe().f_code.co_name, "Start")
+
+    """ Get IAM User """
+    try:
+        policy = iam.list_attached_user_policies(UserName=user)
+    except:
+        error_log(sys._getframe().f_code.co_name, "Get IAM User Policy List: " + user)
+        sys.exit(1)
+
+    info_log(sys._getframe().f_code.co_name, "Get IAM User Policy List: " + user)
+    info_log(sys._getframe().f_code.co_name, "End")
+    return policy['AttachedPolicies']
+
+def iam_list_user_policies(user):
+    """
+    引数で指定されたIAMユーザ所有のポリシーリストを取得
+    """
+    info_log(sys._getframe().f_code.co_name, "Start")
+
+    """ Get IAM User """
+    try:
+        inpolicy = iam.list_user_policies(UserName=user)
+    except:
+        error_log(sys._getframe().f_code.co_name, "Get IAM User Inline Policy List: " + user)
+        sys.exit(1)
+
+    info_log(sys._getframe().f_code.co_name, "Get IAM User Inline Policy List: " + user)
+    info_log(sys._getframe().f_code.co_name, "End")
+    return inpolicy['PolicyNames']
 
 def iam_delete_user(user):
     """
@@ -147,22 +198,31 @@ def iam_delete_user(user):
     if(user_flg == 1):
         info_log(sys._getframe().f_code.co_name, "End")
         sys.exit(1)
+
+    """ Detach IAM User Group """
+    group = iam_list_groups_for_user(user)
+
+    for i in range(len(group)):
+        response = iam.remove_user_from_group(GroupName = group[i]['GroupName'], UserName = user)
+        info_log(sys._getframe().f_code.co_name, "Remove Group: " + group[i]['GroupName'])
         
-    """ Check IAM User """
-    user_policy = iam_list_user_policies(user)
+    """ Detach IAM User Policy """
+    policy = iam_list_attached_user_policies(user)
 
-    """ Delete IAM User Policies """
-    for i in range(len(user_policy)):
-        try:
-            response = iam.delete_user_policy(UserName = user, PolicyName = user_policies[0])
-        except:
-            error_log(sys._getframe().f_code.co_name, "Delete IAM User  Error")
-            sys.exit(1)
-        info_log(sys._getframe().f_code.co_name, "Deleted IAM User: " + user)
+    for i in range(len(policy)):
+        response = iam.detach_user_policy(UserName = user, PolicyArn = policy[i]['PolicyArn'])
+        info_log(sys._getframe().f_code.co_name, "Detached Policy: " + policy[i]['PolicyName'])
+        
+    """ Delete IAM User Inline Policy """
+    inpolicy = iam_list_user_policies(user)
 
+    for i in range(len(inpolicy)):
+        response = iam.delete_user_policy(UserName = user, PolicyName = inpolicy[i])
+        info_log(sys._getframe().f_code.co_name, "Detached Policy: " + inpolicy[i])
+        
     """ Delete IAM User """
     try:
-        response = iam.delete_user(UserName = user)
+        response = iam.delete_user(UserName=user)
     except:
         error_log(sys._getframe().f_code.co_name, "Delete IAM User Error")
         sys.exit(1)
