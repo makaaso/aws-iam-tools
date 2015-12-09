@@ -250,9 +250,12 @@ def iam_delete_user(user):
         info_log(sys._getframe().f_code.co_name, "Delete Policy: " + inpolicy[i])
         
     """ Delete IAM User Login Profile """
-    if('PasswordLastUsed' in userinfo['User']):
-        iam.delete_login_profile(user)
-        info_log(sys._getframe().f_code.co_name, "Deleted Login Policy: ")
+    try:
+        response = iam.delete_login_profile(UserName=user)
+    except:
+        info_log(sys._getframe().f_code.co_name, "Login Profile Not Found ")
+    else:
+        info_log(sys._getframe().f_code.co_name, "Delete Login Profile: " + user)
 
     """ Delete IAM User """
     try:
