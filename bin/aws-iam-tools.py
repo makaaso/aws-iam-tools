@@ -75,6 +75,15 @@ def usage():
         help = 'AWS Account Profile Name'    # --help時に表示する文
     )
 
+    """ Argument Create User """
+    parser.add_argument(
+        '--create-user',
+        type = str,
+        dest = 'create_user',
+        default = '',
+        help = 'AWS Create IAM User'
+    )
+
     """ Argument Delete User """
     parser.add_argument(
         '--delete-user',
@@ -121,11 +130,11 @@ def iam_get_user(user):
         userinfo = iam.get_user(UserName=user)
     except:
         info_log(sys._getframe().f_code.co_name, "IAM User Not Found: " + user)
-        sys.exit(1)
+        return 1
 
     info_log(sys._getframe().f_code.co_name, "IAM User Exist: " + user)
     info_log(sys._getframe().f_code.co_name, "End")
-    return userinfo
+    return 0
 
 def iam_list_groups_for_user(user):
     """
@@ -212,6 +221,27 @@ def iam_list_user_policies(user):
     info_log(sys._getframe().f_code.co_name, "End")
     return inpolicy['PolicyNames']
 
+def iam_create_user(user):
+    """
+    引数で指定されたIAMユーザを作成
+    """
+    info_log(sys._getframe().f_code.co_name, "Start")
+
+    """ Get IAM User """
+    userinfo = iam_get_user(user)
+    if(userinfo == 0):
+        return 1
+
+    """ Create IAM User """
+    try:
+        response = iam.create_user(UserName=user)
+    except:
+        error_log(sys._getframe().f_code.co_name, "Create IAM User Error")
+        sys.exit(1)
+
+    info_log(sys._getframe().f_code.co_name, "Create IAM User: " + user)
+    info_log(sys._getframe().f_code.co_name, "End")
+
 def iam_delete_user(user):
     """
     引数で指定されたIAMユーザを削除
@@ -220,6 +250,8 @@ def iam_delete_user(user):
 
     """ Get IAM User """
     userinfo = iam_get_user(user)
+    if(userinfo == 1):
+        return 1
 
     """ Delete IAM User AccessKey """
     accesskey = iam_list_access_keys(user)
@@ -315,14 +347,24 @@ if __name__ == "__main__":
         print('Connection Error')
         sys.exit(1)
 
+    """ Create IAM User """
+    if(args.create_user != ""):
+        iam_create_user(args.create_user)
+        info_log(__name__, "End")
+        sys.exit(0)
+
     """ Delete IAM User """
     if(args.delete_user != ""):
         iam_delete_user(args.delete_user)
+        info_log(__name__, "End")
+        sys.exit(0)
 
     """ List IAM User """
     if(args.list == True):
         iam_list_users()
+        info_log(__name__, "End")
+        sys.exit(0)
 
-    info_log(__name__, "End")
+    info_log(__name__, "Nothing to do")
     sys.exit(0)
 
