@@ -13,11 +13,12 @@
 AWS-IAM関連ツール
 
 [機能]
- - 指定されたIAMユーザーを削除する
+ - 指定されたIAMユーザを削除する
+ - IAMユーザリストを表示する
 """
 
 __authour__ = "masaru.kawabata"
-__version__ = 0.1
+__version__ = 0.11
 
 from argparse import ArgumentParser
 import boto3
@@ -80,7 +81,15 @@ def usage():
         type = str,
         dest = 'delete_user',
         default = '',
-        help = 'AWS Delete User'
+        help = 'AWS Delete IAM User'
+    )
+
+    """ Argument List User """
+    parser.add_argument(
+        '--list',
+        action = 'store_true',
+        dest = 'list',
+        help = 'AWS List IAM User'
     )
 
     """ 引数を解析 """
@@ -103,20 +112,20 @@ def get_config():
 
 def iam_get_user(user):
     """
-    引数で指定されたIAMユーザを削除
+    引数で指定されたIAMユーザの情報取得
     """
     info_log(sys._getframe().f_code.co_name, "Start")
 
     """ Get IAM User """
     try:
-        response = iam.get_user(UserName=user)
+        userinfo = iam.get_user(UserName=user)
     except:
         info_log(sys._getframe().f_code.co_name, "IAM User Not Found: " + user)
-        return 1
+        sys.exit(1)
 
     info_log(sys._getframe().f_code.co_name, "IAM User Exist: " + user)
     info_log(sys._getframe().f_code.co_name, "End")
-    return 0
+    return userinfo
 
 def iam_list_groups_for_user(user):
     """
@@ -209,12 +218,8 @@ def iam_delete_user(user):
     """
     info_log(sys._getframe().f_code.co_name, "Start")
 
-    """ Check IAM User """
-    user_flg = iam_get_user(user)
-
-    if(user_flg == 1):
-        info_log(sys._getframe().f_code.co_name, "End")
-        sys.exit(1)
+    """ Get IAM User """
+    userinfo = iam_get_user(user)
 
     """ Delete IAM User AccessKey """
     accesskey = iam_list_access_keys(user)
@@ -228,7 +233,7 @@ def iam_delete_user(user):
 
     for i in range(len(group)):
         response = iam.remove_user_from_group(GroupName = group[i]['GroupName'], UserName = user)
-        info_log(sys._getframe().f_code.co_name, "Remove Group: " + group[i]['GroupName'])
+        info_log(sys._getframe().f_code.co_name, "Detach Group: " + group[i]['GroupName'])
         
     """ Detach IAM User Policy """
     policy = iam_list_attached_user_policies(user)
@@ -242,8 +247,16 @@ def iam_delete_user(user):
 
     for i in range(len(inpolicy)):
         response = iam.delete_user_policy(UserName = user, PolicyName = inpolicy[i])
-        info_log(sys._getframe().f_code.co_name, "Detached Policy: " + inpolicy[i])
+        info_log(sys._getframe().f_code.co_name, "Delete Policy: " + inpolicy[i])
         
+    """ Delete IAM User Login Profile """
+    try:
+        response = iam.delete_login_profile(UserName=user)
+    except:
+        info_log(sys._getframe().f_code.co_name, "Login Profile Not Found ")
+    else:
+        info_log(sys._getframe().f_code.co_name, "Delete Login Profile: " + user)
+
     """ Delete IAM User """
     try:
         response = iam.delete_user(UserName=user)
@@ -252,6 +265,25 @@ def iam_delete_user(user):
         sys.exit(1)
 
     info_log(sys._getframe().f_code.co_name, "Deleted IAM User: " + user)
+    info_log(sys._getframe().f_code.co_name, "End")
+
+def iam_list_users():
+    """
+    IAMユーザリストを取得
+    """
+    info_log(sys._getframe().f_code.co_name, "Start")
+
+    """ Get IAM User List """
+    try:
+        users = iam.list_users()
+    except:
+        error_log(sys._getframe().f_code.co_name, "Get IAM User Error")
+        sys.exit(1)
+
+    """ Display IAM User List """
+    for i in range(len(users['Users'])):
+        print(users['Users'][i]['UserName'])
+
     info_log(sys._getframe().f_code.co_name, "End")
 
 if __name__ == "__main__":
@@ -286,6 +318,10 @@ if __name__ == "__main__":
     """ Delete IAM User """
     if(args.delete_user != ""):
         iam_delete_user(args.delete_user)
+
+    """ List IAM User """
+    if(args.list == True):
+        iam_list_users()
 
     info_log(__name__, "End")
     sys.exit(0)
