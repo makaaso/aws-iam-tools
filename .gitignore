@@ -1,3 +1,5 @@
-bin/.swp
+bin/*.swp
 bin/__pycache__/
-log/
+log/*
+tags
+scp-dev.sh
