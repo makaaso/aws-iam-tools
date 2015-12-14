@@ -15,6 +15,7 @@ AWS-IAM関連ツール
 [機能]
  - 指定されたIAMユーザを削除する
  - IAMユーザリストを表示する
+ - 指定されたIAMユーザを作成する
 """
 
 __authour__ = "masaru.kawabata"
