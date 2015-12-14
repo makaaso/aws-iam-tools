@@ -10,6 +10,7 @@ aws-iam-tools
 * 指定されたIAMユーザを削除する
 * IAMユーザリストを表示する
 * 指定されたIAMユーザを作成する
+* 指定されたIAMユーザにグループポリシーをアタッチする
 
 #### 前提条件
 
@@ -51,5 +52,11 @@ python aws-iam-tools.py --profile <PROFILE> --list
 
 ```
 python aws-iam-tools.py --profile <PROFILE> --create-user <USER>
+```
+
+##### IAMユーザグループポリシーアタッチ
+
+```
+python aws-iam-tools.py --profile <PROFILE> --update-user <USER> --attach-policy <POLICY>
 ```
 
