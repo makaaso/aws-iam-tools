@@ -7,7 +7,9 @@ aws-iam-tools
 
 #### 機能
 
-* 指定されたIAMユーザーを削除する
+* 指定されたIAMユーザを削除する
+* IAMユーザリストを表示する
+* 指定されたIAMユーザを作成する
 
 #### 前提条件
 
@@ -29,5 +31,25 @@ workon reporting3.4
 pip install boto3
 pip install pyyaml
 pip install argparse
+```
+
+#### 使用方法
+
+##### IAMユーザ削除
+
+```
+python aws-iam-tools.py --profile <PROFILE> --delete-user <USER>
+```
+
+##### IAMユーザリスト表示
+
+```
+python aws-iam-tools.py --profile <PROFILE> --list
+```
+
+##### IAMユーザ作成
+
+```
+python aws-iam-tools.py --profile <PROFILE> --create-user <USER>
 ```
 
