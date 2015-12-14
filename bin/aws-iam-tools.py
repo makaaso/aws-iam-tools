@@ -13,13 +13,14 @@
 AWS-IAM関連ツール
 
 [機能]
- - 指定されたIAMユーザを削除する
- - IAMユーザリストを表示する
- - 指定されたIAMユーザを作成する
+ - 指定されたIAMユーザを削除する(v0.1)
+ - IAMユーザリストを表示する(v0.11)
+ - 指定されたIAMユーザを作成する(v0.12)
+ - 指定されたIAMユーザにグループポリシーをアタッチする(v0.13)
 """
 
 __authour__ = "masaru.kawabata"
-__version__ = 0.11
+__version__ = 0.13
 
 from argparse import ArgumentParser
 import boto3
@@ -76,6 +77,15 @@ def usage():
         help = 'AWS Account Profile Name'    # --help時に表示する文
     )
 
+    """ Argument Attach Policy """
+    parser.add_argument(
+        '--attach-policy',
+        type = str,
+        dest = 'attach_policy',
+        default = '',
+        help = 'AWS Attach Policy'
+    )
+
     """ Argument Create User """
     parser.add_argument(
         '--create-user',
@@ -100,6 +110,15 @@ def usage():
         action = 'store_true',
         dest = 'list',
         help = 'AWS List IAM User'
+    )
+
+    """ Argument Update User """
+    parser.add_argument(
+        '--update-user',
+        type = str,
+        dest = 'update_user',
+        default = '',
+        help = 'AWS Update IAM User'
     )
 
     """ 引数を解析 """
@@ -319,6 +338,45 @@ def iam_list_users():
 
     info_log(sys._getframe().f_code.co_name, "End")
 
+def iam_update_user(user):
+    """
+    IAMユーザにポリシーをアタッチ
+    """
+    info_log(sys._getframe().f_code.co_name, "Start")
+
+    """ Get IAM User """
+    userinfo = iam_get_user(user)
+    if(userinfo == 1):
+        info_log(sys._getframe().f_code.co_name, "IAM User Not Found")
+        return 1
+
+    """ Attach Policy """
+    if(args.attach_policy != ""):
+        try:
+            response = iam.list_policies(Scope = 'AWS', MaxItems = 999)
+        except:
+            error_log(sys._getframe().f_code.co_name, "Get IAM User Error")
+            sys.exit(1)
+
+        """ Check Policy """
+        check_flg = 0
+        for i in range(len(response['Policies'])):
+            if(args.attach_policy == response['Policies'][i]['PolicyName']):
+                check_flg = 1
+                break
+
+        if(check_flg == 0):
+            info_log(sys._getframe().f_code.co_name, "Policy Not Found")
+            return 1
+
+        try:
+            response = iam.attach_user_policy(UserName = user, PolicyArn = response['Policies'][i]['Arn'])
+        except:
+            error_log(sys._getframe().f_code.co_name, "Attach Policy Error")
+            sys.exit(1)
+
+    info_log(sys._getframe().f_code.co_name, "End")
+
 if __name__ == "__main__":
     """ Get OS ENV """
     osenv = get_os_env()
@@ -363,6 +421,12 @@ if __name__ == "__main__":
     """ List IAM User """
     if(args.list == True):
         iam_list_users()
+        info_log(__name__, "End")
+        sys.exit(0)
+
+    """ Update IAM User """
+    if(args.update_user != ""):
+        iam_update_user(args.update_user)
         info_log(__name__, "End")
         sys.exit(0)
 
