@@ -19,10 +19,11 @@ AWS-IAM関連ツール
  - 指定されたIAMユーザにポリシーをアタッチする(v0.13)
  - 指定されたIAMユーザのポリシーリストを表示する(v0.14)
  - 指定する引数を大幅に変更(v0.15)
+ - IAMユーザ名を変更する(v0.16)
 """
 
 __authour__ = "masaru.kawabata"
-__version__ = 0.15
+__version__ = 0.16
 
 from argparse import ArgumentParser
 import boto3
@@ -88,6 +89,15 @@ def usage():
         help = 'IAM User'
     )
 
+    """ Argument New User(option) """
+    parser.add_argument(
+        '--newuser',
+        type = str,
+        dest = 'newuser',
+        default = '',
+        help = 'IAM New User'
+    )
+
     """ Argument Policy(option) """
     parser.add_argument(
         '--policy',
@@ -137,6 +147,14 @@ def usage():
         help = 'AWS List IAM User Policy'
     )
 
+    """ Argument Modify User Name(feature) """
+    parser.add_argument(
+        '--modify-user-name',
+        action = 'store_true',
+        dest = 'modify_user_name',
+        help = 'AWS Modify User Name'
+    )
+
     """ 引数を解析 """
     args = parser.parse_args()
 
@@ -150,6 +168,19 @@ def check_option_user():
 
     if(args.user == ""):
         error_log(sys._getframe().f_code.co_name, "User Option Error")
+        sys.exit(1)
+
+    info_log(sys._getframe().f_code.co_name, "End")
+    return 0
+
+def check_option_newuser():
+    """
+    --newuserオプションが指定されているかチェック
+    """
+    info_log(sys._getframe().f_code.co_name, "Start")
+
+    if(args.newuser == ""):
+        error_log(sys._getframe().f_code.co_name, "New User Option Error")
         sys.exit(1)
 
     info_log(sys._getframe().f_code.co_name, "End")
@@ -417,6 +448,24 @@ def feature_list_user_policies(user):
 
     info_log(sys._getframe().f_code.co_name, "End")
 
+def feature_modify_user_name(user, newuser):
+    """
+    IAMユーザ名変更
+    """
+    info_log(sys._getframe().f_code.co_name, "Start")
+
+    """ Get IAM User List """
+    try:
+        response = iam.update_user(UserName = user, NewUserName = newuser)
+    except:
+        error_log(sys._getframe().f_code.co_name, "Modify User Name Error")
+        sys.exit(1)
+
+    info_log(sys._getframe().f_code.co_name, "Old User Name: " + user)
+    info_log(sys._getframe().f_code.co_name, "New User Name: " + newuser)
+    info_log(sys._getframe().f_code.co_name, "End")
+    return 0
+
 if __name__ == "__main__":
     """ Get OS ENV """
     osenv = get_os_env()
@@ -464,8 +513,13 @@ if __name__ == "__main__":
         featuer_attach_user_policy(args.user, args.policy)
     elif(args.list_user_policies == True):
         """ List User Policy """
-        user = check_option_user()
+        check_option_user()
         feature_list_user_policies(args.user)
+    elif(args.modify_user_name == True):
+        """ Modify User Name """
+        check_option_user()
+        check_option_newuser()
+        feature_modify_user_name(args.user, args.newuser)
     else:
         """ Other """
         info_log(__name__, "Nothing to do")
