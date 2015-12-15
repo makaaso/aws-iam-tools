@@ -13,6 +13,7 @@ aws-iam-tools
 * 指定されたIAMユーザにポリシーをアタッチする
 * 指定されたIAMユーザのポリシーリストを表示する
 * IAMユーザ名を変更する
+* IAMユーザ作成機能にパスワード設定機能を追加
 
 #### 前提条件
 
@@ -54,6 +55,8 @@ python aws-iam-tools.py --profile <PROFILE> --list-user
 
 ```
 python aws-iam-tools.py --profile <PROFILE> --create-user --user <USER>
+python aws-iam-tools.py --profile <PROFILE> --create-user --user <USER> --password <PASSWORD>
+python aws-iam-tools.py --profile <PROFILE> --create-user --user <USER> --password <PASSWORD> --reset-required
 ```
 
 ##### IAMユーザポリシーアタッチ
