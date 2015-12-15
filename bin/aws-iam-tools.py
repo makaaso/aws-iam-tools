@@ -16,11 +16,12 @@ AWS-IAM関連ツール
  - 指定されたIAMユーザを削除する(v0.1)
  - IAMユーザリストを表示する(v0.11)
  - 指定されたIAMユーザを作成する(v0.12)
- - 指定されたIAMユーザにグループポリシーをアタッチする(v0.13)
+ - 指定されたIAMユーザにポリシーをアタッチする(v0.13)
+ - 指定されたIAMユーザのポリシーリストを表示する(v0.14)
 """
 
 __authour__ = "masaru.kawabata"
-__version__ = 0.13
+__version__ = 0.14
 
 from argparse import ArgumentParser
 import boto3
@@ -121,6 +122,15 @@ def usage():
         help = 'AWS Update IAM User'
     )
 
+    """ Argument List User Policy """
+    parser.add_argument(
+        '--list-user-policies',
+        type = str,
+        dest = 'list_user_policies',
+        default = '',
+        help = 'AWS List IAM User Policy'
+    )
+
     """ 引数を解析 """
     args = parser.parse_args()
 
@@ -207,23 +217,6 @@ def iam_list_attached_user_policies(user):
     info_log(sys._getframe().f_code.co_name, "End")
     return policy['AttachedPolicies']
 
-def iam_list_attached_user_policies(user):
-    """
-    引数で指定されたIAMユーザにAttachされているポリシーリストを取得
-    """
-    info_log(sys._getframe().f_code.co_name, "Start")
-
-    """ Get IAM User """
-    try:
-        policy = iam.list_attached_user_policies(UserName=user)
-    except:
-        error_log(sys._getframe().f_code.co_name, "Get IAM User Policy List: " + user)
-        sys.exit(1)
-
-    info_log(sys._getframe().f_code.co_name, "Get IAM User Policy List: " + user)
-    info_log(sys._getframe().f_code.co_name, "End")
-    return policy['AttachedPolicies']
-
 def iam_list_user_policies(user):
     """
     引数で指定されたIAMユーザ所有のポリシーリストを取得
@@ -241,7 +234,7 @@ def iam_list_user_policies(user):
     info_log(sys._getframe().f_code.co_name, "End")
     return inpolicy['PolicyNames']
 
-def iam_create_user(user):
+def feature_create_user(user):
     """
     引数で指定されたIAMユーザを作成
     """
@@ -262,7 +255,7 @@ def iam_create_user(user):
     info_log(sys._getframe().f_code.co_name, "Create IAM User: " + user)
     info_log(sys._getframe().f_code.co_name, "End")
 
-def iam_delete_user(user):
+def feature_delete_user(user):
     """
     引数で指定されたIAMユーザを削除
     """
@@ -319,7 +312,7 @@ def iam_delete_user(user):
     info_log(sys._getframe().f_code.co_name, "Deleted IAM User: " + user)
     info_log(sys._getframe().f_code.co_name, "End")
 
-def iam_list_users():
+def feature_list_users():
     """
     IAMユーザリストを取得
     """
@@ -338,7 +331,7 @@ def iam_list_users():
 
     info_log(sys._getframe().f_code.co_name, "End")
 
-def iam_update_user(user):
+def featuer_update_user(user):
     """
     IAMユーザにポリシーをアタッチ
     """
@@ -377,6 +370,21 @@ def iam_update_user(user):
 
     info_log(sys._getframe().f_code.co_name, "End")
 
+def feature_list_user_policies(user):
+    """
+    IAMユーザポリシーリストを取得
+    """
+    info_log(sys._getframe().f_code.co_name, "Start")
+
+    """ Get IAM User List """
+    policies = iam_list_attached_user_policies(user)
+
+    """ Display IAM User List """
+    for i in range(len(policies)):
+        print(policies[i]['PolicyName'])
+
+    info_log(sys._getframe().f_code.co_name, "End")
+
 if __name__ == "__main__":
     """ Get OS ENV """
     osenv = get_os_env()
@@ -408,25 +416,31 @@ if __name__ == "__main__":
 
     """ Create IAM User """
     if(args.create_user != ""):
-        iam_create_user(args.create_user)
+        feature_create_user(args.create_user)
         info_log(__name__, "End")
         sys.exit(0)
 
     """ Delete IAM User """
     if(args.delete_user != ""):
-        iam_delete_user(args.delete_user)
+        feature_delete_user(args.delete_user)
         info_log(__name__, "End")
         sys.exit(0)
 
     """ List IAM User """
     if(args.list == True):
-        iam_list_users()
+        feature_list_users()
         info_log(__name__, "End")
         sys.exit(0)
 
     """ Update IAM User """
     if(args.update_user != ""):
-        iam_update_user(args.update_user)
+        featuer_update_user(args.update_user)
+        info_log(__name__, "End")
+        sys.exit(0)
+
+    """ List IAM User Policy """
+    if(args.list_user_policies != ""):
+        feature_list_user_policies(args.list_user_policies)
         info_log(__name__, "End")
         sys.exit(0)
 
