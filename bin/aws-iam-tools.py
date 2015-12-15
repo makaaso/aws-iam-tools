@@ -20,10 +20,11 @@ AWS-IAM関連ツール
  - 指定されたIAMユーザのポリシーリストを表示する(v0.14)
  - 指定する引数を大幅に変更(v0.15)
  - IAMユーザ名を変更する(v0.16)
+ - IAMユーザ作成機能にパスワード設定機能を追加(v0.17)
 """
 
 __authour__ = "masaru.kawabata"
-__version__ = 0.16
+__version__ = 0.17
 
 from argparse import ArgumentParser
 import boto3
@@ -96,6 +97,23 @@ def usage():
         dest = 'newuser',
         default = '',
         help = 'IAM New User'
+    )
+
+    """ Argument User Password(option) """
+    parser.add_argument(
+        '--password',
+        type = str,
+        dest = 'password',
+        default = '',
+        help = 'IAM User Password'
+    )
+
+    """ Argument User Password Reset Request(option) """
+    parser.add_argument(
+        '--reset-required',
+        action = 'store_true',
+        dest = 'reset_required',
+        help = 'IAM User Password Reset Request'
     )
 
     """ Argument Policy(option) """
@@ -297,7 +315,7 @@ def iam_list_user_policies(user):
     info_log(sys._getframe().f_code.co_name, "End")
     return inpolicy['PolicyNames']
 
-def feature_create_user(user):
+def feature_create_user(user, password, reset_required):
     """
     引数で指定されたIAMユーザを作成
     """
@@ -315,8 +333,18 @@ def feature_create_user(user):
         error_log(sys._getframe().f_code.co_name, "Create IAM User Error")
         sys.exit(1)
 
+    if(password != ""):
+        info_log(sys._getframe().f_code.co_name, "Create IAM User Login Profile Start")
+        try:
+            response = iam.create_login_profile(UserName = user, Password = password, PasswordResetRequired = reset_required)
+        except:
+            error_log(sys._getframe().f_code.co_name, "Create IAM User Error")
+            sys.exit(1)
+        info_log(sys._getframe().f_code.co_name, "Create IAM User Login Profile End")
+
     info_log(sys._getframe().f_code.co_name, "Create IAM User: " + user)
     info_log(sys._getframe().f_code.co_name, "End")
+    return 0
 
 def feature_delete_user(user):
     """
@@ -498,7 +526,7 @@ if __name__ == "__main__":
     """ Option """
     if(args.create_user == True):
         """ Create User """
-        feature_create_user(args.user)
+        feature_create_user(args.user, args.password, args.reset_required)
     elif(args.delete_user == True):
         """" Delete User """
         check_option_user()
