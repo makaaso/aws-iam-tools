@@ -12,16 +12,17 @@
 [概要]
 AWS-IAM関連ツール
 
-[機能]
+[変更履歴]
  - 指定されたIAMユーザを削除する(v0.1)
  - IAMユーザリストを表示する(v0.11)
  - 指定されたIAMユーザを作成する(v0.12)
  - 指定されたIAMユーザにポリシーをアタッチする(v0.13)
  - 指定されたIAMユーザのポリシーリストを表示する(v0.14)
+ - 指定する引数を大幅に変更(v0.15)
 """
 
 __authour__ = "masaru.kawabata"
-__version__ = 0.14
+__version__ = 0.15
 
 from argparse import ArgumentParser
 import boto3
@@ -78,56 +79,61 @@ def usage():
         help = 'AWS Account Profile Name'    # --help時に表示する文
     )
 
-    """ Argument Attach Policy """
+    """ Argument User(option) """
     parser.add_argument(
-        '--attach-policy',
+        '--user',
         type = str,
-        dest = 'attach_policy',
+        dest = 'user',
         default = '',
-        help = 'AWS Attach Policy'
+        help = 'IAM User'
     )
 
-    """ Argument Create User """
+    """ Argument Policy(option) """
+    parser.add_argument(
+        '--policy',
+        type = str,
+        dest = 'policy',
+        default = '',
+        help = 'IAM User Policy'
+    )
+
+    """ Argument Create User(feature) """
     parser.add_argument(
         '--create-user',
-        type = str,
+        action = 'store_true',
         dest = 'create_user',
-        default = '',
         help = 'AWS Create IAM User'
     )
 
-    """ Argument Delete User """
+    """ Argument Delete User(feature) """
     parser.add_argument(
         '--delete-user',
-        type = str,
+        action = 'store_true',
         dest = 'delete_user',
-        default = '',
         help = 'AWS Delete IAM User'
     )
 
-    """ Argument List User """
+    """ Argument List User(feature) """
     parser.add_argument(
-        '--list',
+        '--list-user',
         action = 'store_true',
-        dest = 'list',
+        dest = 'list_user',
         help = 'AWS List IAM User'
     )
 
-    """ Argument Update User """
+    """ Argument Attach User Policy(feature) """
     parser.add_argument(
-        '--update-user',
-        type = str,
-        dest = 'update_user',
-        default = '',
-        help = 'AWS Update IAM User'
+        '--attach-user-policy',
+        action = 'store_true',
+        dest = 'attach_user_policy',
+        help = 'AWS Attach User Policy'
     )
 
-    """ Argument List User Policy """
+    """ Argument List User Policy(feature) """
     parser.add_argument(
         '--list-user-policies',
-        type = str,
+        action = 'store_true',
         dest = 'list_user_policies',
-        default = '',
         help = 'AWS List IAM User Policy'
     )
 
@@ -135,6 +141,32 @@ def usage():
     args = parser.parse_args()
 
     return args    # オプションで指定した値は args.<変数名>で取得できる
+
+def check_option_user():
+    """
+    --userオプションが指定されているかチェック
+    """
+    info_log(sys._getframe().f_code.co_name, "Start")
+
+    if(args.user == ""):
+        error_log(sys._getframe().f_code.co_name, "User Option Error")
+        sys.exit(1)
+
+    info_log(sys._getframe().f_code.co_name, "End")
+    return 0
+
+def check_option_policy():
+    """
+    --policyオプションが指定されているかチェック
+    """
+    info_log(sys._getframe().f_code.co_name, "Start")
+
+    if(args.policy == ""):
+        error_log(sys._getframe().f_code.co_name, "Policy Option Error")
+        sys.exit(1)
+
+    info_log(sys._getframe().f_code.co_name, "End")
+    return 0
 
 def get_config():
     """
@@ -331,7 +363,7 @@ def feature_list_users():
 
     info_log(sys._getframe().f_code.co_name, "End")
 
-def featuer_update_user(user):
+def featuer_attach_user_policy(user, policy):
     """
     IAMユーザにポリシーをアタッチ
     """
@@ -344,31 +376,31 @@ def featuer_update_user(user):
         return 1
 
     """ Attach Policy """
-    if(args.attach_policy != ""):
-        try:
-            response = iam.list_policies(Scope = 'AWS', MaxItems = 999)
-        except:
-            error_log(sys._getframe().f_code.co_name, "Get IAM User Error")
-            sys.exit(1)
+    try:
+        response = iam.list_policies(Scope = 'AWS', MaxItems = 999)
+    except:
+        error_log(sys._getframe().f_code.co_name, "Get IAM User Error")
+        sys.exit(1)
 
-        """ Check Policy """
-        check_flg = 0
-        for i in range(len(response['Policies'])):
-            if(args.attach_policy == response['Policies'][i]['PolicyName']):
-                check_flg = 1
-                break
+    """ Check Policy """
+    check_flg = 0
+    for i in range(len(response['Policies'])):
+        if(policy == response['Policies'][i]['PolicyName']):
+            check_flg = 1
+            break
 
-        if(check_flg == 0):
-            info_log(sys._getframe().f_code.co_name, "Policy Not Found")
-            return 1
+    if(check_flg == 0):
+        info_log(sys._getframe().f_code.co_name, "Policy Not Found")
+        return 1
 
-        try:
-            response = iam.attach_user_policy(UserName = user, PolicyArn = response['Policies'][i]['Arn'])
-        except:
-            error_log(sys._getframe().f_code.co_name, "Attach Policy Error")
-            sys.exit(1)
+    try:
+        response = iam.attach_user_policy(UserName = user, PolicyArn = response['Policies'][i]['Arn'])
+    except:
+        error_log(sys._getframe().f_code.co_name, "Attach Policy Error")
+        sys.exit(1)
 
     info_log(sys._getframe().f_code.co_name, "End")
+    return 0
 
 def feature_list_user_policies(user):
     """
@@ -414,36 +446,30 @@ if __name__ == "__main__":
         print('Connection Error')
         sys.exit(1)
 
-    """ Create IAM User """
-    if(args.create_user != ""):
-        feature_create_user(args.create_user)
-        info_log(__name__, "End")
-        sys.exit(0)
-
-    """ Delete IAM User """
-    if(args.delete_user != ""):
-        feature_delete_user(args.delete_user)
-        info_log(__name__, "End")
-        sys.exit(0)
-
-    """ List IAM User """
-    if(args.list == True):
+    """ Option """
+    if(args.create_user == True):
+        """ Create User """
+        feature_create_user(args.user)
+    elif(args.delete_user == True):
+        """" Delete User """
+        check_option_user()
+        feature_delete_user(args.user)
+    elif(args.list_user == True):
+        """ List User """
         feature_list_users()
-        info_log(__name__, "End")
-        sys.exit(0)
+    elif(args.attach_user_policy == True):
+        """ Attach User Policy """
+        check_option_user()
+        check_option_policy()
+        featuer_attach_user_policy(args.user, args.policy)
+    elif(args.list_user_policies == True):
+        """ List User Policy """
+        user = check_option_user()
+        feature_list_user_policies(args.user)
+    else:
+        """ Other """
+        info_log(__name__, "Nothing to do")
 
-    """ Update IAM User """
-    if(args.update_user != ""):
-        featuer_update_user(args.update_user)
-        info_log(__name__, "End")
-        sys.exit(0)
-
-    """ List IAM User Policy """
-    if(args.list_user_policies != ""):
-        feature_list_user_policies(args.list_user_policies)
-        info_log(__name__, "End")
-        sys.exit(0)
-
-    info_log(__name__, "Nothing to do")
+    info_log(__name__, "End")
     sys.exit(0)
 

@@ -40,24 +40,30 @@ pip install argparse
 ##### IAMユーザ削除
 
 ```
-python aws-iam-tools.py --profile <PROFILE> --delete-user <USER>
+python aws-iam-tools.py --profile <PROFILE> --delete-user --user <USER>
 ```
 
 ##### IAMユーザリスト表示
 
 ```
-python aws-iam-tools.py --profile <PROFILE> --list
+python aws-iam-tools.py --profile <PROFILE> --list-user
 ```
 
 ##### IAMユーザ作成
 
 ```
-python aws-iam-tools.py --profile <PROFILE> --create-user <USER>
+python aws-iam-tools.py --profile <PROFILE> --create-user --user <USER>
 ```
 
-##### IAMユーザグループポリシーアタッチ
+##### IAMユーザポリシーアタッチ
 
 ```
-python aws-iam-tools.py --profile <PROFILE> --update-user <USER> --attach-policy <POLICY>
+python aws-iam-tools.py --profile <PROFILE> --attach-user-policy --user <USER> --policy <POLICY>
+```
+
+##### IAMユーザポリシーリスト表示
+
+```
+python aws-iam-tools.py --profile <PROFILE> --list-user
 ```
 
