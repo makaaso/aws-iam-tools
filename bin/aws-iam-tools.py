@@ -21,10 +21,11 @@ AWS-IAM関連ツール
  - 指定する引数を大幅に変更(v0.15)
  - IAMユーザ名を変更する(v0.16)
  - IAMユーザ作成機能にパスワード設定機能を追加(v0.17)
+ - 指定されたIAMユーザのポリシーをデタッチする(v0.18)
 """
 
 __authour__ = "masaru.kawabata"
-__version__ = 0.17
+__version__ = 0.18
 
 from argparse import ArgumentParser
 import boto3
@@ -171,6 +172,14 @@ def usage():
         action = 'store_true',
         dest = 'modify_user_name',
         help = 'AWS Modify User Name'
+    )
+
+    """ Argument Detach User Policy(feature) """
+    parser.add_argument(
+        '--detach-user-policy',
+        action = 'store_true',
+        dest = 'detach_user_policy',
+        help = 'AWS Detach User Policy'
     )
 
     """ 引数を解析 """
@@ -422,7 +431,7 @@ def feature_list_users():
 
     info_log(sys._getframe().f_code.co_name, "End")
 
-def featuer_attach_user_policy(user, policy):
+def feature_attach_user_policy(user, policy):
     """
     IAMユーザにポリシーをアタッチ
     """
@@ -434,14 +443,13 @@ def featuer_attach_user_policy(user, policy):
         info_log(sys._getframe().f_code.co_name, "IAM User Not Found")
         return 1
 
-    """ Attach Policy """
+    """ Check Policy """
     try:
         response = iam.list_policies(Scope = 'AWS', MaxItems = 999)
     except:
         error_log(sys._getframe().f_code.co_name, "Get IAM User Error")
         sys.exit(1)
 
-    """ Check Policy """
     check_flg = 0
     for i in range(len(response['Policies'])):
         if(policy == response['Policies'][i]['PolicyName']):
@@ -452,12 +460,54 @@ def featuer_attach_user_policy(user, policy):
         info_log(sys._getframe().f_code.co_name, "Policy Not Found")
         return 1
 
+    """ Attach Policy """
     try:
         response = iam.attach_user_policy(UserName = user, PolicyArn = response['Policies'][i]['Arn'])
     except:
         error_log(sys._getframe().f_code.co_name, "Attach Policy Error")
         sys.exit(1)
 
+    info_log(sys._getframe().f_code.co_name, "Attach Policy: " + policy)
+    info_log(sys._getframe().f_code.co_name, "End")
+    return 0
+
+def feature_detach_user_policy(user, policy):
+    """
+    IAMユーザのポリシーをデタッチ
+    """
+    info_log(sys._getframe().f_code.co_name, "Start")
+
+    """ Get IAM User """
+    userinfo = iam_get_user(user)
+    if(userinfo == 1):
+        info_log(sys._getframe().f_code.co_name, "IAM User Not Found")
+        return 1
+
+    """ Check Policy """
+    try:
+        response = iam.list_policies(Scope = 'AWS', MaxItems = 999)
+    except:
+        error_log(sys._getframe().f_code.co_name, "Get IAM User Error")
+        sys.exit(1)
+
+    check_flg = 0
+    for i in range(len(response['Policies'])):
+        if(policy == response['Policies'][i]['PolicyName']):
+            check_flg = 1
+            break
+
+    if(check_flg == 0):
+        info_log(sys._getframe().f_code.co_name, "Policy Not Found")
+        return 1
+
+    """ Detach Policy """
+    try:
+        response = iam.detach_user_policy(UserName = user, PolicyArn = response['Policies'][i]['Arn'])
+    except:
+        error_log(sys._getframe().f_code.co_name, "Detach Policy Error")
+        sys.exit(1)
+
+    info_log(sys._getframe().f_code.co_name, "Detach Policy: " + policy)
     info_log(sys._getframe().f_code.co_name, "End")
     return 0
 
@@ -538,7 +588,7 @@ if __name__ == "__main__":
         """ Attach User Policy """
         check_option_user()
         check_option_policy()
-        featuer_attach_user_policy(args.user, args.policy)
+        feature_attach_user_policy(args.user, args.policy)
     elif(args.list_user_policies == True):
         """ List User Policy """
         check_option_user()
@@ -548,6 +598,11 @@ if __name__ == "__main__":
         check_option_user()
         check_option_newuser()
         feature_modify_user_name(args.user, args.newuser)
+    elif(args.detach_user_policy == True):
+        """ Detach User Policy """
+        check_option_user()
+        check_option_policy()
+        feature_detach_user_policy(args.user, args.policy)
     else:
         """ Other """
         info_log(__name__, "Nothing to do")
